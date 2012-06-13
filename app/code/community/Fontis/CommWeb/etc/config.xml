@@ -1,0 +1,82 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Fontis CommWeb Extension
+ *
+ * This extension connects to the Commonwealth Bank's CommWeb payment gateway.
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to license@magentocommerce.com you will be sent a copy immediately.
+ *
+ * @category   Fontis
+ * @package    Fontis_CommWeb
+ * @author     Chris Norton
+ * @copyright  Copyright (c) 2008 Fontis Pty. Ltd. (http://www.fontis.com.au)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
+-->
+<config>
+    <modules>
+        <Fontis_CommWeb>
+            <version>1.1.0</version>
+            <depends>
+                <Mage_Payment />
+            </depends>
+        </Fontis_CommWeb>
+    </modules>
+    <global>
+    	<models>
+    		<commWeb>
+	    		<class>Fontis_CommWeb_Model</class>
+	    	</commWeb>
+    	</models>
+    	<helpers>
+    		<commWeb>
+    			<class>Fontis_CommWeb_Helper</class>
+    		</commWeb>
+    	</helpers>
+        <resources>
+            <commWeb_setup>
+                <setup>
+                    <module>Fontis_CommWeb</module>
+                </setup>
+                <connection>
+                    <use>directory_setup</use>
+                </connection>
+            </commWeb_setup>
+            <commWeb_write>
+                <connection>
+                    <use>local_write</use>
+                </connection>
+            </commWeb_write>
+            <commWeb_read>
+                <connection>
+                    <use>local_read</use>
+                </connection>
+            </commWeb_read>
+        </resources>
+    </global>
+	<default>
+        <payment>
+            <commWeb>
+            	<active>0</active>
+            	<model>commWeb/commWeb</model>
+            	<username>YOURCOMPANY</username>
+            	<password></password>
+            	<title>Credit Card (CommWeb)</title>
+            	<allowspecific>0</allowspecific>
+            	<debug>0</debug>
+            	<test>1</test>
+            	<cctypes>AE,VI,MC</cctypes>
+            	<payment_action>authorize_capture</payment_action>
+            </commWeb>
+        </payment>
+    </default>
+</config>
