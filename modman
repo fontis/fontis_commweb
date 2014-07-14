@@ -1,0 +1,6 @@
+# modman module description
+# see https://github.com/colinmollenhour/modman/ for more info
+
+# Fontis Commonwealth Bank CommWeb
+src/app/code/community/Fontis/CommWeb  app/code/community/Fontis/CommWeb
+src/app/etc/modules/Fontis_CommWeb.xml app/etc/modules/Fontis_CommWeb.xml
