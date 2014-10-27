@@ -54,16 +54,6 @@ class Fontis_CommWeb_Model_CommWeb extends Mage_Payment_Model_Method_Cc
 		return self::CC_URL_LIVE;
 	}
 	
-	public function getDebug()
-	{
-		return Mage::getStoreConfig('payment/commWeb/debug');
-	}
-	
-	public function getLogPath()
-	{
-		return Mage::getBaseDir() . '/var/log/commWeb.log';
-	}
-	
 	/**
 	 * Returns the MerchantID as set in the configuration. Note that, if test
 	 * mode is active then "TEST" will be prepended to the ID.
@@ -85,36 +75,47 @@ class Fontis_CommWeb_Model_CommWeb extends Mage_Payment_Model_Method_Cc
 		return Mage::getStoreConfig('payment/commWeb/password');
 	}
 
+     /**
+      * 
+      */
+     public function assignData($data)
+     {
+        $this->_debug('entering assignData()');         
+         
+        parent::assignData($data);
+
+        if (!($data instanceof Varien_Object)) {
+            $data = new Varien_Object($data);
+        }
+        
+        // Store CC numbers in extra variables because the CC number get cleared before saving.
+        $info = $this->getInfoInstance();
+        $info->setCcNumberForPayment($data->getCcNumber());
+        $info->setCcCidForPayment($data->getCcCid());
+        
+        return $this;
+     }
+
 	/**
 	 *
 	 */
 	public function validate()
     {
-    	if($this->getDebug())
-		{
-	    	$writer = new Zend_Log_Writer_Stream($this->getLogPath());
-			$logger = new Zend_Log($writer);
-			$logger->info("entering validate()");
-		}
-		
+        $this->_debug('entering validate()');
+
+		/// Restore CC numbers from temp variables in order to pass the validation.
+        $info = $this->getInfoInstance();
+        $info->setCcNumber($info->getCcNumberForPayment());
+        $info->setCcCid($info->getCcCidForPayment());
+
         parent::validate();
-        $paymentInfo = $this->getInfoInstance();
-        if ($paymentInfo instanceof Mage_Sales_Model_Order_Payment) {
-            $currency_code = $paymentInfo->getOrder()->getBaseCurrencyCode();
-        } else {
-            $currency_code = $paymentInfo->getQuote()->getBaseCurrencyCode();
-        }
+
         return $this;
     }
 
 	public function authorize(Varien_Object $payment, $amount)
 	{
-		if($this->getDebug())
-		{
-			$writer = new Zend_Log_Writer_Stream($this->getLogPath());
-			$logger = new Zend_Log($writer);
-			$logger->info("entering authorize()");
-		}
+		$this->_debug('entering authorize()');
 	}
 	
 	/**
@@ -122,20 +123,15 @@ class Fontis_CommWeb_Model_CommWeb extends Mage_Payment_Model_Method_Cc
 	 */
 	public function capture(Varien_Object $payment, $amount)
 	{
-		if($this->getDebug())
-		{
-			$writer = new Zend_Log_Writer_Stream($this->getLogPath());
-			$logger = new Zend_Log($writer);
-			$logger->info("entering capture()");
-		}
-	
+		$this->_debug('entering capture()');		
+		
 		$this->setAmount($amount)
 			->setPayment($payment);
 
 		$result = $this->_call($payment);
 		
-		if($this->getDebug()) { $logger->info(var_export($result, TRUE)); }
-
+		$this->_debug(var_export($result, TRUE));
+		
 		if($result === false)
 		{
 			$e = $this->getError();
@@ -167,12 +163,7 @@ class Fontis_CommWeb_Model_CommWeb extends Mage_Payment_Model_Method_Cc
 	 */
 	protected function _call(Varien_Object $payment)
 	{
-		if($this->getDebug())
-		{
-			$writer = new Zend_Log_Writer_Stream($this->getLogPath());
-			$logger = new Zend_Log($writer);
-			$logger->info("entering _call()");
-		}
+		$this->_debug('entering _call()');
 		
 		// Generate any needed values
 		
@@ -192,11 +183,6 @@ class Fontis_CommWeb_Model_CommWeb extends Mage_Payment_Model_Method_Cc
 			$amount = $amount / 100;
 		}
 		
-		if($this->getDebug())
-		{
-			$logger->info( var_export($payment->getOrder()->getData(), TRUE) );
-		}
-		
 		// Build the XML request
 		$request = array();
 		$request['vpc_Version'] = '1';
@@ -210,11 +196,10 @@ class Fontis_CommWeb_Model_CommWeb extends Mage_Payment_Model_Method_Cc
 		$request['vpc_CardSecurityCode'] = htmlentities($payment->getCcCid());
 		
 		$request['vpc_AccessCode'] = htmlentities($this->getPassword()); 
-		$request['vpc_Amount'] = htmlentities($amount);
+		$request['vpc_Amount'] =  htmlentities($amount);
 		
-		// DEBUG
-		if($this->getDebug()) { $logger->info(print_r($request, true)); }
-		
+		$this->_debug(print_r($request, true));
+				
 		$postRequestData = '';
 		$amp = '';
 		foreach($request as $key => $value) {
@@ -242,10 +227,7 @@ class Fontis_CommWeb_Model_CommWeb extends Mage_Payment_Model_Method_Cc
 		// Close the connection
 		$http->close();
 		
-		// DEBUG
-		if($this->getDebug()) { 
-			$logger->info($response); 
-		}
+		$this->_debug($response);
 		
 		// Strip out header tags
         $response = preg_split('/^\r?$/m', $response, 2);
@@ -259,10 +241,8 @@ class Fontis_CommWeb_Model_CommWeb extends Mage_Payment_Model_Method_Cc
 			$result[$tokens[0]] = $tokens[1];
 		}
 		
-		if($this->getDebug()) { 
-			$logger->info(print_r($result, true));
-		}
-			
+		$this->_debug(print_r($result, true));
+		
 		return $result;
 	}
 }
