@@ -23,19 +23,17 @@
 
 class Fontis_CommWeb_Model_CommWeb_PaymentAction
 {
-	public function toOptionArray()
-	{
-		return array(
-			array(
-				'value' => 'authorize_capture',
-				'label' => 'Authorise and Capture'
-			),
-			array(
-				'value' => 'authorize',
-				'label' => 'Authorise'
-			)
-		);
-	}
+    public function toOptionArray()
+    {
+        return array(
+            array(
+                'value' => 'authorize_capture',
+                'label' => 'Authorise and Capture'
+            ),
+            array(
+                'value' => 'authorize',
+                'label' => 'Authorise'
+            )
+        );
+    }
 }
-
-?>

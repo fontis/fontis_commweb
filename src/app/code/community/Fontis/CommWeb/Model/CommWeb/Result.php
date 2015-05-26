@@ -25,5 +25,3 @@ class Fontis_CommWeb_Model_CommWeb_Result extends Varien_Object
 {
 
 }
-
-?>

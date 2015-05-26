@@ -20,7 +20,7 @@
  * @copyright  Copyright (c) 2008 Fontis Pty. Ltd. (http://www.fontis.com.au)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
- 
+
 class Fontis_CommWeb_Model_CommWeb extends Mage_Payment_Model_Method_Cc
 {
 
@@ -36,74 +36,65 @@ class Fontis_CommWeb_Model_CommWeb extends Mage_Payment_Model_Method_Cc
     protected $_canUseCheckout          = true;
     protected $_canUseForMultishipping  = true;
     protected $_canSaveCc               = false;
-    
+
     // Credit Card URLs
-    const CC_URL_LIVE = 'https://migs.mastercard.com.au/vpcdps';    
-    
+    const CC_URL_LIVE = 'https://migs.mastercard.com.au/vpcdps';
+
     const STATUS_APPROVED = 'Approved';
 
-	const PAYMENT_ACTION_AUTH_CAPTURE = 'authorize_capture';
-	const PAYMENT_ACTION_AUTH = 'authorize';
+    const PAYMENT_ACTION_AUTH_CAPTURE = 'authorize_capture';
+    const PAYMENT_ACTION_AUTH = 'authorize';
 
-	/**
-	 * Returns the URL to send requests to. This changes depending on whether
-	 * the extension is set to testing mode or not.
-	 */
-	public function getGatewayUrl()
-	{
-		return self::CC_URL_LIVE;
-	}
-	
-	/**
-	 * Returns the MerchantID as set in the configuration. Note that, if test
-	 * mode is active then "TEST" will be prepended to the ID.
-	 */
-	public function getUsername()
-	{
-		if(Mage::getStoreConfig('payment/commWeb/test'))
-		{
-			return 'TEST' . Mage::getStoreConfig('payment/commWeb/username');
-		}
-		else
-		{
-			return Mage::getStoreConfig('payment/commWeb/username');
-		}
-	}
-	
-	public function getPassword()
-	{
-		return Mage::getStoreConfig('payment/commWeb/password');
-	}
+    /**
+     * Returns the URL to send requests to. This changes depending on whether
+     * the extension is set to testing mode or not.
+     */
+    public function getGatewayUrl()
+    {
+        return self::CC_URL_LIVE;
+    }
 
-     /**
-      * 
-      */
-     public function assignData($data)
-     {
-        $this->_debug('entering assignData()');         
-         
+    /**
+     * Returns the MerchantID as set in the configuration. Note that, if test
+     * mode is active then "TEST" will be prepended to the ID.
+     */
+    public function getUsername()
+    {
+        if (Mage::getStoreConfig('payment/commWeb/test')) {
+            return 'TEST' . Mage::getStoreConfig('payment/commWeb/username');
+        } else {
+            return Mage::getStoreConfig('payment/commWeb/username');
+        }
+    }
+
+    public function getPassword()
+    {
+        return Mage::getStoreConfig('payment/commWeb/password');
+    }
+
+    public function assignData($data)
+    {
+        $this->_debug('entering assignData()');
+
         parent::assignData($data);
 
         if (!($data instanceof Varien_Object)) {
             $data = new Varien_Object($data);
         }
-        
+
         // Store CC numbers in extra variables because the CC number get cleared before saving.
         $info = $this->getInfoInstance();
         $info->setCcNumberForPayment($data->getCcNumber());
         $info->setCcCidForPayment($data->getCcCid());
-        
-        return $this;
-     }
 
-	/**
-	 *
-	 */
-	public function validate()
+        return $this;
+    }
+
+    public function validate()
     {
         $this->_debug('entering validate()');
 
-		/// Restore CC numbers from temp variables in order to pass the validation.
+        // Restore CC numbers from temp variables in order to pass the validation.
         $info = $this->getInfoInstance();
         $info->setCcNumber($info->getCcNumberForPayment());
         $info->setCcCid($info->getCcCidForPayment());
@@ -113,136 +104,128 @@ class Fontis_CommWeb_Model_CommWeb extends Mage_Payment_Model_Method_Cc
         return $this;
     }
 
-	public function authorize(Varien_Object $payment, $amount)
-	{
-		$this->_debug('entering authorize()');
-	}
-	
-	/**
-	 *
-	 */
-	public function capture(Varien_Object $payment, $amount)
-	{
-		$this->_debug('entering capture()');		
-		
-		$this->setAmount($amount)
-			->setPayment($payment);
+    public function capture(Varien_Object $payment, $amount)
+    {
+        $this->_debug('entering capture()');
 
-		$result = $this->_call($payment);
-		
-		$this->_debug(var_export($result, TRUE));
-		
-		if($result === false)
-		{
-			$e = $this->getError();
-			if (isset($e['message'])) {
-				$message = Mage::helper('commWeb')->__('There has been an error processing your payment.') . $e['message'];
-			} else {
-				$message = Mage::helper('commWeb')->__('There has been an error processing your payment. Please try later or contact us for help.');
-			}
-			Mage::throwException($message);
-		}
-		else
-		{
-			// Check if there is a gateway error
-			if ($result['vpc_TxnResponseCode'] == "0")
-			{
-				$payment->setStatus(self::STATUS_APPROVED)
-					->setLastTransId($this->getTransactionId());
-			}
-			else
-			{
-				Mage::throwException("Error code " . $result['vpc_TxnResponseCode'] . ": " . urldecode($result['vpc_Message']));
-			}
-		}
-		return $this;
-	}
+        $this->setAmount($amount)
+            ->setPayment($payment);
 
-	/**
-	 *
-	 */
-	protected function _call(Varien_Object $payment)
-	{
-		$this->_debug('entering _call()');
-		
-		// Generate any needed values
-		
-		// Create expiry dat in format "YY/MM"
-		$date_expiry = substr($payment->getCcExpYear(), 2, 2) . str_pad($payment->getCcExpMonth(), 2, '0', STR_PAD_LEFT);
-		
-		// Most currency have two minor units (e.g. cents) and thus need to be
-		// multiplied by 100 to get the correct number to send.
-		$amount = $this->getAmount() * 100;
-		
-		// Several currencies do not have minor units and thus should not be
-		// multiplied.
-		if($payment->getOrder()->getBaseCurrencyCode() == 'JPY' ||
-		   $payment->getOrder()->getBaseCurrencyCode() == 'ITL' ||
-		   $payment->getOrder()->getBaseCurrencyCode() == 'GRD')
-		{
-			$amount = $amount / 100;
-		}
-		
-		// Build the XML request
-		$request = array();
-		$request['vpc_Version'] = '1';
-		$request['vpc_Command'] = 'pay';
-		$request['vpc_MerchTxnRef'] = $payment->getOrder()->getIncrementId();
-		$request['vpc_Merchant'] = htmlentities($this->getUsername());
-		$request['vpc_OrderInfo'] = $payment->getOrder()->getIncrementId();
-		$request['vpc_CardNum'] = htmlentities($payment->getCcNumber());
-		$request['vpc_CardExp'] = htmlentities($date_expiry);
-		
-		$request['vpc_CardSecurityCode'] = htmlentities($payment->getCcCid());
-		
-		$request['vpc_AccessCode'] = htmlentities($this->getPassword()); 
-		$request['vpc_Amount'] =  htmlentities($amount);
-		
-		$this->_debug(print_r($request, true));
-				
-		$postRequestData = '';
-		$amp = '';
-		foreach($request as $key => $value) {
-			if(!empty($value)) {
-				$postRequestData .= $amp . urlencode($key) . '=' . urlencode($value);
-				$amp = '&';
-			}
-		}
-		
-		// Send the data via HTTP POST and get the response
-		$http = new Varien_Http_Adapter_Curl();
-		$http->setConfig(array('timeout' => 30));		
-		$http->write(Zend_Http_Client::POST, $this->getGatewayUrl(), '1.1', array(), $postRequestData);
-		
-		$response = $http->read();
-		
-		if ($http->getErrno()) {
-			$http->close();
-			$this->setError(array(
-				'message' => $http->getError()
-			));
-			return false;
-		}
-		
-		// Close the connection
-		$http->close();
-		
-		$this->_debug($response);
-		
-		// Strip out header tags
+        $result = $this->_call($payment);
+
+        $this->_debug(var_export($result, true));
+
+        if ($result === false) {
+            $e = $this->getError();
+            if (isset($e['message'])) {
+                $message
+                    = Mage::helper('commWeb')->__('There has been an error processing your payment.') . $e['message'];
+            } else {
+                $message = Mage::helper('commWeb')->__(
+                    'There has been an error processing your payment. Please try later or contact us for help.'
+                );
+            }
+            Mage::throwException($message);
+        } else {
+            // Check if there is a gateway error
+            if ($result['vpc_TxnResponseCode'] == "0") {
+                $payment->setStatus(self::STATUS_APPROVED)->setLastTransId($this->getTransactionId());
+            } else {
+                Mage::throwException(
+                    "Error code " . $result['vpc_TxnResponseCode'] . ": " . urldecode($result['vpc_Message'])
+                );
+            }
+        }
+
+        return $this;
+    }
+
+    protected function _call(Varien_Object $payment)
+    {
+        $this->_debug('entering _call()');
+
+        // Generate any needed values
+
+        // Create expiry dat in format "YY/MM"
+        $date_expiry
+            = substr($payment->getCcExpYear(), 2, 2) . str_pad($payment->getCcExpMonth(), 2, '0', STR_PAD_LEFT);
+
+        // Most currency have two minor units (e.g. cents) and thus need to be
+        // multiplied by 100 to get the correct number to send.
+        $amount = $this->getAmount() * 100;
+
+        // Several currencies do not have minor units and thus should not be
+        // multiplied.
+        if ($payment->getOrder()->getBaseCurrencyCode() == 'JPY'
+            || $payment->getOrder()->getBaseCurrencyCode() == 'ITL'
+            || $payment->getOrder()->getBaseCurrencyCode() == 'GRD'
+        ) {
+            $amount = $amount / 100;
+        }
+
+        // Build the XML request
+        $request = array();
+        $request['vpc_Version'] = '1';
+        $request['vpc_Command'] = 'pay';
+        $request['vpc_MerchTxnRef'] = $payment->getOrder()->getIncrementId();
+        $request['vpc_Merchant'] = htmlentities($this->getUsername());
+        $request['vpc_OrderInfo'] = $payment->getOrder()->getIncrementId();
+        $request['vpc_CardNum'] = htmlentities($payment->getCcNumber());
+        $request['vpc_CardExp'] = htmlentities($date_expiry);
+
+        $request['vpc_CardSecurityCode'] = htmlentities($payment->getCcCid());
+
+        $request['vpc_AccessCode'] = htmlentities($this->getPassword());
+        $request['vpc_Amount'] = htmlentities($amount);
+
+        $this->_debug(print_r($request, true));
+
+        $postRequestData = '';
+        $amp = '';
+        foreach ($request as $key => $value) {
+            if (!empty($value)) {
+                $postRequestData .= $amp . urlencode($key) . '=' . urlencode($value);
+                $amp = '&';
+            }
+        }
+
+        // Send the data via HTTP POST and get the response
+        $http = new Varien_Http_Adapter_Curl();
+        $http->setConfig(array('timeout' => 30));
+        $http->write(Zend_Http_Client::POST, $this->getGatewayUrl(), '1.1', array(), $postRequestData);
+
+        $response = $http->read();
+
+        if ($http->getErrno()) {
+            $http->close();
+            $this->setError(
+                array(
+                    'message' => $http->getError()
+                )
+            );
+
+            return false;
+        }
+
+        // Close the connection
+        $http->close();
+
+        $this->_debug($response);
+
+        // Strip out header tags
         $response = preg_split('/^\r?$/m', $response, 2);
         $response = trim($response[1]);
-		
-		// Fill out the results
-		$result = array();
-		$pieces = explode('&', $response);
-		foreach($pieces as $piece) {
-			$tokens = explode('=', $piece);
-			$result[$tokens[0]] = $tokens[1];
-		}
-		
-		$this->_debug(print_r($result, true));
-		
-		return $result;
-	}
+
+        // Fill out the results
+        $result = array();
+        $pieces = explode('&', $response);
+        foreach ($pieces as $piece) {
+            $tokens = explode('=', $piece);
+            $result[$tokens[0]] = $tokens[1];
+        }
+
+        $this->_debug(print_r($result, true));
+
+        return $result;
+    }
 }

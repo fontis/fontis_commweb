@@ -25,23 +25,23 @@
 <config>
     <modules>
         <Fontis_CommWeb>
-            <version>1.1.0</version>
+            <version>1.1.1</version>
             <depends>
-                <Mage_Payment />
+                <Mage_Payment/>
             </depends>
         </Fontis_CommWeb>
     </modules>
     <global>
-    	<models>
-    		<commWeb>
-	    		<class>Fontis_CommWeb_Model</class>
-	    	</commWeb>
-    	</models>
-    	<helpers>
-    		<commWeb>
-    			<class>Fontis_CommWeb_Helper</class>
-    		</commWeb>
-    	</helpers>
+        <models>
+            <commWeb>
+                <class>Fontis_CommWeb_Model</class>
+            </commWeb>
+        </models>
+        <helpers>
+            <commWeb>
+                <class>Fontis_CommWeb_Helper</class>
+            </commWeb>
+        </helpers>
         <resources>
             <commWeb_setup>
                 <setup>
@@ -70,22 +70,22 @@
                 <cc_cid_for_payment>
                     <to_order_payment>*</to_order_payment>
                 </cc_cid_for_payment>
-    		</sales_convert_quote_payment>
-		</fieldsets>                
+            </sales_convert_quote_payment>
+        </fieldsets>
     </global>
-	<default>
+    <default>
         <payment>
             <commWeb>
-            	<active>0</active>
-            	<model>commWeb/commWeb</model>
-            	<username>YOURCOMPANY</username>
-            	<password></password>
-            	<title>Credit Card (CommWeb)</title>
-            	<allowspecific>0</allowspecific>
-            	<debug>0</debug>
-            	<test>1</test>
-            	<cctypes>AE,VI,MC</cctypes>
-            	<payment_action>authorize_capture</payment_action>
+                <active>0</active>
+                <model>commWeb/commWeb</model>
+                <username>YOURCOMPANY</username>
+                <password></password>
+                <title>Credit Card (CommWeb)</title>
+                <allowspecific>0</allowspecific>
+                <debug>0</debug>
+                <test>1</test>
+                <cctypes>AE,VI,MC</cctypes>
+                <payment_action>authorize_capture</payment_action>
             </commWeb>
         </payment>
     </default>

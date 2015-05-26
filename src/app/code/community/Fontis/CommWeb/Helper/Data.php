@@ -20,11 +20,11 @@
  * @copyright  Copyright (c) 2008 Fontis Pty. Ltd. (http://www.fontis.com.au)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
- 
+
 /**
  * Data helper
  */
 class Fontis_CommWeb_Helper_Data extends Mage_Core_Helper_Abstract
 {
 
-} 
+}
