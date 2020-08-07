@@ -1,11 +1,10 @@
 Fontis Commonwealth Bank CommWeb
 ================================
 
-Extension which provides basic Magento integration with the Commonwealth Bank CommWeb gateway.
+**Note:** This extension is **abandoned** and no longer maintained. It only supports Magento 1 and we have no plans to undertake development of a Magento 2 version.
 
-Further documentation is available from the [Fontis CommWeb](http://www.fontis.com.au/magento/extension/commweb) page on our website.
+Extension which provides basic Magento integration with the Commonwealth Bank CommWeb gateway.
 
 ### Community Contributions
 
 1. [@ben_corlett](https://twitter.com/ben_corlett)
-2. Add your name here

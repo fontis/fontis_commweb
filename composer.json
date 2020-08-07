@@ -3,7 +3,7 @@
     "type": "magento-module",
     "license": "Open Software License (OSL 3.0)",
     "description": "Extension which provides basic Magento integration with the Commonwealth Bank CommWeb gateway.",
-    "homepage": "http: //www.fontis.com.au",
+    "homepage": "https://www.fontis.com.au",
     "authors": [
         {
             "name": "Fontis",
